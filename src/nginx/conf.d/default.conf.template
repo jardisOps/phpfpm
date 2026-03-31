@@ -1,0 +1,148 @@
+###############################################################################
+# Nginx vhost – HTTP only (SSL wird von Traefik übernommen)                   #
+###############################################################################
+
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+
+    server_name ${HOST};
+
+    ###############
+    # Basis-Setup #
+    ###############
+    root   ${APP_ROOT}${DOCUMENT_ROOT};
+    index  ${INDEX_FILE} index.html;
+    charset UTF-8;
+
+    client_max_body_size 100m;
+    send_timeout         600;
+    keepalive_timeout    70;
+    server_tokens        off;
+
+    ########
+    # Gzip #
+    ########
+    gzip on;
+    gzip_comp_level 6;
+    gzip_min_length 1000;
+    gzip_proxied any;
+    gzip_vary on;
+    gzip_types
+        application/javascript
+        application/json
+        application/xml
+        application/rss+xml
+        application/atom+xml
+        text/css
+        text/xml
+        text/javascript
+        text/plain
+        image/svg+xml;
+
+    #################
+    # Security-Header
+    #################
+    add_header Referrer-Policy           "no-referrer-when-downgrade";
+    add_header X-XSS-Protection          "1; mode=block";
+    add_header X-Content-Type-Options    "nosniff";
+    add_header X-Frame-Options           "SAMEORIGIN";
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    # add_header Content-Security-Policy   "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'";
+    add_header Content-Security-Policy   "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'";
+
+    ##############################
+    # Real-IP (Docker / Traefik) #
+    ##############################
+    real_ip_header X-Forwarded-For;
+    set_real_ip_from 172.16.0.0/12;  # Docker-Netzwerk
+    set_real_ip_from 10.0.0.0/8;     # Weitere private Netze
+    real_ip_recursive on;
+
+    ##############################
+    # Static Assets & verborgene #
+    ##############################
+    location ~* \.(?:css|js|gif|jpe?g|png|webp|svg|ico|woff2?|woff|ttf)$ {
+        expires 1y;
+        add_header Cache-Control "public";
+        try_files $uri =404;
+    }
+
+    location ~ /\.(ht|svn|git|env) {
+        deny all;
+        return 404;
+    }
+
+    ###############################################################
+    # 1. Genereller Request-Eingang → Front-Controller /index.php #
+    ###############################################################
+    location / {
+        # 1. existiert Datei/Ordner? → direkt ausliefern
+        # 2. sonst interner Redirect auf  /index.php/<original-Pfad>
+        try_files $uri $uri/ /${INDEX_FILE}?$args;
+        # try_files $uri $uri/ /${INDEX_FILE}$uri$is_args$args;
+    }
+
+    ################################################################
+    # 2. Spezielle Location: /index.php + alles dahinterliegende   #
+    #    – sorgt für korrektes $_SERVER['PATH_INFO']               #
+    ################################################################
+    location ~ ^/${INDEX_FILE}(/.*)?$ {
+        include fastcgi_params;
+        fastcgi_pass   app:${PHP_PORT};
+
+        fastcgi_param  SCRIPT_FILENAME $realpath_root/${INDEX_FILE};
+        fastcgi_param  DOCUMENT_ROOT   $realpath_root;
+
+        # entscheidend
+        fastcgi_param  PATH_INFO       $1;
+        fastcgi_param  PATH_TRANSLATED $document_root$1;
+
+        fastcgi_param  HTTPS                  on;
+        fastcgi_param  REQUEST_SCHEME         https;
+        fastcgi_param  HTTP_X_FORWARDED_PROTO https;
+        fastcgi_param  HTTP_X_FORWARDED_FOR   $proxy_add_x_forwarded_for;
+        fastcgi_param  HTTP_X_REAL_IP         $remote_addr;
+
+        fastcgi_read_timeout    600;
+        fastcgi_send_timeout    600;
+        fastcgi_connect_timeout 300;
+
+        fastcgi_buffer_size      128k;
+        fastcgi_buffers          4 256k;
+        fastcgi_busy_buffers_size 256k;
+    }
+
+    ###############################################################
+    # 3. Fallback: wirkliche *.php-Dateien (z. B. /info.php)       #
+    ###############################################################
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_pass   app:${PHP_PORT};
+        fastcgi_index  ${INDEX_FILE};
+
+        fastcgi_param  SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        fastcgi_param  DOCUMENT_ROOT   $realpath_root;
+
+        fastcgi_param  HTTPS                  on;
+        fastcgi_param  REQUEST_SCHEME         https;
+        fastcgi_param  HTTP_X_FORWARDED_PROTO https;
+        fastcgi_param  HTTP_X_FORWARDED_FOR   $proxy_add_x_forwarded_for;
+        fastcgi_param  HTTP_X_REAL_IP         $remote_addr;
+
+        fastcgi_read_timeout    600;
+        fastcgi_send_timeout    600;
+        fastcgi_connect_timeout 300;
+
+        fastcgi_buffer_size      128k;
+        fastcgi_buffers          4 256k;
+        fastcgi_busy_buffers_size 256k;
+    }
+
+    ##############################
+    # Versteckte Dateien sperren #
+    ##############################
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}

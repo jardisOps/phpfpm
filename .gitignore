@@ -1,0 +1,8 @@
+.git/
+.claude/
+.idea/
+.DS_Store
+
+**/*.tmp
+**/*.log
+*.local

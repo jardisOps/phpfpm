@@ -1,0 +1,9 @@
+services:
+  webserver:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+      args:
+        - WEBSERVER_VERSION=${WEBSERVER_VERSION}
+        - PUID=${PUID}
+        - PGID=${PGID}

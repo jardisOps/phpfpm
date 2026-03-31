@@ -1,0 +1,20 @@
+services:
+  app:
+    build:
+      context: ./php
+      dockerfile: Dockerfile
+      args:
+        # Base image
+        - COMPOSER_VERSION=${COMPOSER_VERSION}
+        - ALPINE_VERSION=${ALPINE_VERSION}
+        - PHP_VERSION=${PHP_VERSION}
+        # User/Group IDs
+        - PUID=${PUID}
+        - PGID=${PGID}
+        # PECL versions
+        - APCU_VERSION=${APCU_VERSION}
+        - REDIS_PECL_VERSION=${REDIS_PECL_VERSION}
+        - XDEBUG_VERSION=${XDEBUG_VERSION}
+        - PCOV_VERSION=${PCOV_VERSION}
+        - AMQP_VERSION=${AMQP_VERSION}
+        - RDKAFKA_VERSION=${RDKAFKA_VERSION}
