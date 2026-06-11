@@ -1,19 +1,21 @@
-# 🐘 Headgent PHP-FPM & Nginx Docker Images
+# 🐘 Jardis PHP-FPM & Nginx Docker Images
 
-![Build Status](https://github.com/headgent/phpfpm/actions/workflows/phpfpm.yml/badge.svg)
+![Build Status](https://github.com/jardisOps/phpfpm/actions/workflows/phpfpm.yml/badge.svg)
 [![Docker Image Version](https://img.shields.io/docker/v/headgent/phpfpm?sort=semver)](https://hub.docker.com/r/headgent/phpfpm)
 
 ### Production-grade PHP-FPM images built for high-performance web applications
 
 Ship faster, scale smarter, and deploy with confidence. Our battle-tested images power **PHP 8.2–8.4** web workloads on **linux/amd64** and **linux/arm64**, delivering enterprise performance with developer-friendly defaults.
 
+Part of **[Jardis](https://jardis.io)** — the platform for Domain-Driven Design in PHP. These images run the production-ready hexagonal code that Jardis-based applications are built on.
+
 ---
 
-## 🚀 Why Choose Headgent PHP-FPM?
+## 🚀 Why Choose Jardis PHP-FPM?
 
 ### Built for Production, Optimized for Performance
 
-Modern PHP applications demand more than basic runtime environments. **Headgent PHP-FPM** delivers a complete, production-ready foundation that eliminates infrastructure complexity and accelerates your deployment pipeline:
+Modern PHP applications demand more than basic runtime environments. **Jardis PHP-FPM** delivers a complete, production-ready foundation that eliminates infrastructure complexity and accelerates your deployment pipeline:
 
 - **🔄 One Image for All Environments** – The same image runs in development, staging, and production. No separate builds, no configuration drift. Just set your environment variables and go.
 
@@ -97,7 +99,7 @@ Modern PHP applications demand more than basic runtime environments. **Headgent 
 |-----|---------------|--------|
 | `1.28`, `latest` | Nginx 1.28 | Current |
 
-**Published on Docker Hub:**
+**Published under the `headgent/` Docker Hub namespace:**
 - https://hub.docker.com/r/headgent/phpfpm
 - https://hub.docker.com/r/headgent/nginx
 
@@ -360,12 +362,18 @@ MIT © Headgent GmbH
 
 ---
 
+## 📚 Documentation
+
+Full documentation, guides, and reference:
+
+**[docs.jardis.io/en/devops/phpfpm](https://docs.jardis.io/en/devops/phpfpm)**
+
 ## 💬 Support
 
-- **Issues:** https://github.com/headgent/phpfpm/issues
+- **Issues:** https://github.com/jardisOps/phpfpm/issues
 - **Docker Hub:** https://hub.docker.com/r/headgent/phpfpm
-- **Email:** devops@headgent.dev
+- **Email:** jardisDev@headgent.com
 
 ---
 
-**Built with ❤️ by Headgent** – Empowering developers to ship production-ready PHP applications with confidence.
+**Built with ❤️ by the Jardis team** – Empowering developers to ship production-ready PHP applications with confidence.
