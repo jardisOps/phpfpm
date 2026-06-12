@@ -40,6 +40,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  keepalive:
+    # Resets GitHub's 60-day inactivity timer so the scheduled rebuild
+    # never falls into disabled_inactivity again (this repo was dead 2026-05-31..06-12).
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Re-enable workflow (keepalive)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT repos/${{ github.repository }}/actions/workflows/phpfpm.yml/enable
+
   # =============================================================================
   # PHP-FPM Images (Matrix Build)
   # =============================================================================
