@@ -154,3 +154,5 @@ WORKDIR /app
 EXPOSE 9000
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["php-fpm"]
+
+MAINTAINER negativtest@example.com
