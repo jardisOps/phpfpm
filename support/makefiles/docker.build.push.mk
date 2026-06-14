@@ -50,11 +50,12 @@ phpfpm-push: buildx-builder-create .check-docker-login ## Build and push PHP-FPM
 		--build-arg FPM_PM_MAX_SPARE_SERVERS=$(FPM_PM_MAX_SPARE_SERVERS) \
 		--build-arg FPM_PM_MAX_REQUESTS=$(FPM_PM_MAX_REQUESTS) \
 		-t $(PHPFPM_IMAGE):$(PHP_VERSION) \
+		-t $(PHPFPM_IMAGE):$(PHP_VERSION)-$(IMAGE_DATE) \
 		$(if $(filter $(PHP_VERSION),$(PHP_LATEST)),-t $(PHPFPM_IMAGE):latest) \
 		-f ./src/php/Dockerfile \
 		./src/php \
 		$(BUILD_EXTRA_FLAGS)
-	@echo "✅ Pushed $(PHPFPM_IMAGE):$(PHP_VERSION)"
+	@echo "✅ Pushed $(PHPFPM_IMAGE):$(PHP_VERSION) (+ :$(PHP_VERSION)-$(IMAGE_DATE))"
 .PHONY: phpfpm-push
 
 phpfpm-push-all: buildx-builder-create .check-docker-login ## Build and push PHP-FPM images for all PHP versions (multi-arch)
@@ -103,11 +104,11 @@ phpfpm-push-all: buildx-builder-create .check-docker-login ## Build and push PHP
 			--build-arg FPM_PM_MIN_SPARE_SERVERS=$(FPM_PM_MIN_SPARE_SERVERS) \
 			--build-arg FPM_PM_MAX_SPARE_SERVERS=$(FPM_PM_MAX_SPARE_SERVERS) \
 			--build-arg FPM_PM_MAX_REQUESTS=$(FPM_PM_MAX_REQUESTS) \
-			-t $(PHPFPM_IMAGE):$$v $$LATEST_TAG \
+			-t $(PHPFPM_IMAGE):$$v -t $(PHPFPM_IMAGE):$$v-$(IMAGE_DATE) $$LATEST_TAG \
 			-f ./src/php/Dockerfile \
 			./src/php \
 			$(BUILD_EXTRA_FLAGS); \
-		echo "✅ Pushed $(PHPFPM_IMAGE):$$v"; \
+		echo "✅ Pushed $(PHPFPM_IMAGE):$$v (+ :$$v-$(IMAGE_DATE))"; \
 	done
 .PHONY: phpfpm-push-all
 
@@ -124,11 +125,12 @@ nginx-push: buildx-builder-create .check-docker-login ## Build and push Nginx im
 		--build-arg PUID=$(PUID) \
 		--build-arg PGID=$(PGID) \
 		-t $(NGINX_IMAGE):$(WEBSERVER_VERSION) \
+		-t $(NGINX_IMAGE):$(WEBSERVER_VERSION)-$(IMAGE_DATE) \
 		-t $(NGINX_IMAGE):latest \
 		-f ./src/nginx/Dockerfile \
 		./src/nginx \
 		$(BUILD_EXTRA_FLAGS)
-	@echo "✅ Pushed $(NGINX_IMAGE):$(WEBSERVER_VERSION)"
+	@echo "✅ Pushed $(NGINX_IMAGE):$(WEBSERVER_VERSION) (+ :$(WEBSERVER_VERSION)-$(IMAGE_DATE))"
 .PHONY: nginx-push
 
 # ---------------------------------------------------------------------------

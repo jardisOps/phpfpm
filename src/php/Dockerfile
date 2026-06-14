@@ -43,7 +43,7 @@ RUN apk add --no-cache \
       xdebug-${XDEBUG_VERSION} \
       pcov-${PCOV_VERSION} \
  && docker-php-ext-enable apcu redis amqp rdkafka xdebug pcov \
- && docker-php-ext-enable opcache || true
+ && docker-php-ext-enable opcache
 
 # --------------------
 # Runtime stage
