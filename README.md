@@ -99,6 +99,15 @@ Modern PHP applications demand more than basic runtime environments. **Jardis PH
 |-----|---------------|--------|
 | `1.28`, `latest` | Nginx 1.28 | Current |
 
+### Moving vs. Immutable Tags
+
+Each publish produces two kinds of tags:
+
+- **Moving tags** — `8.4`, `latest`, `1.28` — always point to the newest rebuild of that line. They pick up Alpine and base-image security patches automatically, so the content behind a moving tag changes over time.
+- **Immutable date tags** — `8.4-YYYYMMDD`, `1.28-YYYYMMDD` (e.g. `8.4-20260614`) — are added on every publish and are never moved to a different build. They let you pin a reproducible image and roll back to a known-good state.
+
+**Recommendation:** Pin an immutable date tag in production deployments for reproducible builds and deterministic rollback; use the moving tags where you want patches applied automatically (e.g. local development).
+
 **Published under the `headgent/` Docker Hub namespace:**
 - https://hub.docker.com/r/headgent/phpfpm
 - https://hub.docker.com/r/headgent/nginx
@@ -313,9 +322,17 @@ make build-and-push-all
 | `make phpfpm-build-all` | Build PHP-FPM (all versions) |
 | `make nginx-build` | Build Nginx image |
 | `make build-all` | Build all images locally |
-| `make phpfpm-push` | Push PHP-FPM (current version) |
+| `make phpfpm-push` | Push PHP-FPM (current version, + immutable date tag) |
 | `make build-and-push-all` | Build and push all images |
 | `make build-cache-delete` | Clear buildx cache |
+| `make test-all` | Run php-fpm smoke tests (FPM boot, extensions, OPcache/JIT; amd64+arm64) |
+| `make nginx-test` | Validate the rendered nginx config (`nginx -t`; amd64+arm64) |
+| `make test-fpm-start` | Smoke test: php-fpm boots and answers `/ping` |
+| `make test-extensions` | Smoke test: all expected PHP extensions loaded |
+| `make test-opcache` | Smoke test: OPcache active and JIT enabled |
+
+> Smoke tests build per-arch test images and run them on `amd64` + `arm64`. For a fast
+> native-only run, override the platform list, e.g. `make test-all TEST_PLATFORMS=arm64`.
 
 ---
 

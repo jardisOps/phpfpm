@@ -1,4 +1,4 @@
-name: Build and Push Docker Images
+name: Build, Test and Push Docker Images
 
 on:
   workflow_dispatch:
@@ -22,6 +22,7 @@ on:
       - '.env'
       - 'src/**'
       - 'support/**'
+      - '.hadolint.yaml'
       - '.github/workflows/phpfpm.yml'
       - '!**/*.md'
   pull_request:
@@ -32,6 +33,7 @@ on:
       - '.env'
       - 'src/**'
       - 'support/**'
+      - '.hadolint.yaml'
       - '.github/workflows/phpfpm.yml'
       - '!**/*.md'
 
@@ -52,6 +54,29 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh api -X PUT repos/${{ github.repository }}/actions/workflows/phpfpm.yml/enable
+
+  # =============================================================================
+  # Lint — both Dockerfiles, single required context "hadolint"
+  # =============================================================================
+  hadolint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v6
+
+      - name: Lint php Dockerfile (hadolint)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: src/php/Dockerfile
+          config: .hadolint.yaml
+
+      - name: Lint nginx Dockerfile (hadolint)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: src/nginx/Dockerfile
+          config: .hadolint.yaml
 
   # =============================================================================
   # PHP-FPM Images (Matrix Build)
@@ -87,7 +112,13 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
 
+      - name: Run smoke tests (amd64/arm64 on test images)
+        run: make test-all PHP_VERSION=${{ matrix.php_version }}
+
+      # Push-Guard: PRs build & smoke-test above but never publish; only
+      # merge/schedule/dispatch push the moving + immutable date tags.
       - name: Build and push PHP-FPM ${{ matrix.php_version }}
+        if: github.event_name != 'pull_request'
         env:
           DOCKER_HUB: ${{ secrets.DOCKER_USER_NAME }}
         run: |
@@ -124,8 +155,51 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
 
+      - name: Run smoke test (nginx config, amd64/arm64)
+        run: make nginx-test
+
+      # Push-Guard: PRs build & smoke-test above but never publish.
       - name: Build and push Nginx
+        if: github.event_name != 'pull_request'
         env:
           DOCKER_HUB: ${{ secrets.DOCKER_USER_NAME }}
+        run: make nginx-push DOCKER_HUB=${DOCKER_HUB}
+
+  # =============================================================================
+  # Trivy — non-blocking CVE visibility on the freshly published images
+  # (base-image CVEs are not self-fixable, so this reports instead of failing).
+  # continue-on-error keeps the run green even if Trivy itself errors.
+  # =============================================================================
+  trivy-report:
+    if: github.event_name != 'pull_request'
+    needs: [build-phpfpm, build-nginx]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        image:
+          - headgent/phpfpm:8.2
+          - headgent/phpfpm:8.3
+          - headgent/phpfpm:8.4
+          - headgent/nginx:1.28
+      fail-fast: false
+    steps:
+      - name: Scan image for HIGH/CRITICAL CVEs
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ matrix.image }}
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: '0'
+          output: trivy-report.txt
+
+      - name: Publish report to job summary
         run: |
-          make nginx-push DOCKER_HUB=${DOCKER_HUB}
+          {
+            echo "## Trivy CVE report — ${{ matrix.image }} (HIGH/CRITICAL)";
+            echo '```';
+            cat trivy-report.txt;
+            echo '```';
+          } >> "$GITHUB_STEP_SUMMARY"
