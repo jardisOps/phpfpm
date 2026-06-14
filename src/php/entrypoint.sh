@@ -86,6 +86,16 @@ EOF
 
 echo "info: Runtime configuration generated"
 
-# Privilege drop and execute
-[ "$(id -u)" = "0" ] && exec su-exec "$APP_USER" "$@"
+# Privilege drop and execute.
+# The container starts as root only for one-time init: align APP_USER's UID/GID
+# with a bind-mounted /app (dev) and hand the container's stdout/stderr to
+# APP_USER. The latter matters because php-fpm reopens the global error_log
+# (/proc/self/fd/2, initially root-owned) AFTER the drop — without chowning the
+# stdio pipes, FPM init fails with "failed to open error_log: Permission denied".
+# With them chowned, the php-fpm master AND its workers run as APP_USER; nothing
+# stays root. (Brief root-for-init is the standard Docker pattern, like gosu.)
+if [ "$(id -u)" = "0" ]; then
+    chown "$APP_USER:$APP_USER" /proc/self/fd/1 /proc/self/fd/2 || true
+    exec su-exec "$APP_USER" "$@"
+fi
 exec "$@"

@@ -16,6 +16,14 @@ PHPFPM_IMAGE    = $(DOCKER_HUB)/phpfpm
 NGINX_IMAGE     = $(DOCKER_HUB)/nginx
 
 # ---------------------------------------------------------------------------
+# Immutable date tag (UTC), added alongside the moving :<ver>/:latest tags in
+# the push targets only. Lets consumers pin a reproducible image for rollback
+# (e.g. headgent/phpfpm:8.4-20260614, headgent/nginx:1.28-20260614) while the
+# moving tags stay current for patch hygiene. Override for reproducible re-tags.
+# ---------------------------------------------------------------------------
+IMAGE_DATE      ?= $(shell date -u +%Y%m%d)
+
+# ---------------------------------------------------------------------------
 # Build Flags (can be overridden via command line)
 # ---------------------------------------------------------------------------
 BUILD_EXTRA_FLAGS  ?=

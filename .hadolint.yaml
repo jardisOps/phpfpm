@@ -1,0 +1,12 @@
+# hadolint configuration for the phpfpm base image (php-fpm + nginx).
+# Every ignore below is a deliberate base-image design decision, not an oversight.
+ignored:
+  # DL3018 — "Pin versions in apk add". The apk packages are Alpine system libraries
+  # that track the pinned ALPINE_VERSION / nginx-alpine build-arg. Pinning each library
+  # version individually would be brittle (versions change with every Alpine point
+  # release) and high-maintenance for a base image whose job is to stay current with
+  # security patches. Applies to both src/php/Dockerfile and src/nginx/Dockerfile.
+  - DL3018
+  # DL4006 — "Set pipefail before RUN with a pipe". The only pipe is `yes "" | pecl install`;
+  # the left side (`yes`) cannot meaningfully fail, so pipefail adds no safety here.
+  - DL4006

@@ -15,6 +15,7 @@ export
 include ./support/makefiles/docker.helper.mk
 include ./support/makefiles/docker.build.local.mk
 include ./support/makefiles/docker.build.push.mk
+include ./support/makefiles/test.mk
 include ./support/makefiles/ssh.mk
 
 # ---------------------------------------------------------------------------
