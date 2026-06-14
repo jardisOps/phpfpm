@@ -9,7 +9,11 @@
 #   - the nginx vhost template renders to a syntactically valid config
 #
 # Test images are built per-arch with --load and tagged :<arch>-test, mirroring
-# the phpcli test flow. Override TEST_PLATFORMS=arm64 for a fast native-only run.
+# the phpcli test flow. TEST_PLATFORMS selects which arches to BOOT: it defaults
+# to both, but booting a non-native arch goes through QEMU (slow and prone to
+# hanging). CI therefore overrides TEST_PLATFORMS=amd64 (its native runner arch);
+# the multi-arch build/push that ships the images still covers amd64 + arm64.
+# Locally, override TEST_PLATFORMS=arm64 on Apple Silicon for a fast native run.
 # ---------------------------------------------------------------------------
 ##@ Test
 
