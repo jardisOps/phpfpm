@@ -112,8 +112,13 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
 
-      - name: Run smoke tests (amd64/arm64 on test images)
-        run: make test-all PHP_VERSION=${{ matrix.php_version }}
+      # Smoke tests boot the freshly built image. The runner is amd64, so booting
+      # an arm64 image means QEMU emulation — which is both very slow and prone to
+      # hanging indefinitely (no timeout) on the buildx --load step. We therefore
+      # smoke-test only on the native runner arch; the multi-arch *build* (incl.
+      # arm64 compile correctness) is still validated by the buildx push step below.
+      - name: Run smoke tests (native amd64 on test image)
+        run: make test-all PHP_VERSION=${{ matrix.php_version }} TEST_PLATFORMS=amd64
 
       # Push-Guard: PRs build & smoke-test above but never publish; only
       # merge/schedule/dispatch push the moving + immutable date tags.
@@ -155,8 +160,9 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
 
-      - name: Run smoke test (nginx config, amd64/arm64)
-        run: make nginx-test
+      # Native arch only — see the rationale on the php-fpm smoke step above.
+      - name: Run smoke test (nginx config, native amd64)
+        run: make nginx-test TEST_PLATFORMS=amd64
 
       # Push-Guard: PRs build & smoke-test above but never publish.
       - name: Build and push Nginx
